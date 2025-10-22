@@ -1,0 +1,1 @@
+# ce-go-template
