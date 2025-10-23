@@ -4,19 +4,20 @@
 package cmd
 
 import (
-  "context"
-  "fmt"
-  "log"
+	"fmt"
+	"log"
+	"time"
 
-  "github.com/spf13/cobra"
-  cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/spf13/cobra"
 
-  . "github.com/anselmes/ce-go-template/cloudevent"
+	. "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
   data string
   print bool
+  attempt int
+  timeout int
   verbose bool
 )
 
@@ -33,8 +34,6 @@ var SendEventCmd = &cobra.Command{
       log.Fatalln(err.Error())
     }
 
-    // MARK: - Dry Run
-
     if print {
       json, err := cm.Json()
       if err != nil {
@@ -45,24 +44,23 @@ var SendEventCmd = &cobra.Command{
     }
 
     if data != "" { cm.FromJson([]byte(data)) }
+    cm.SetRetry(attempt)
+    cm.SetTimeout(time.Duration(1000))
+
     if verbose {
       log.Printf("Sending CloudEvent...")
+      log.Printf("Retry enabled: %d attempts with %d ms timeout", attempt, timeout)
       log.Println(cm.Event)
     }
 
-    // MARK: - Submit
-
-    ctx := cloudevents.ContextWithTarget(context.Background(), url)
-    if result := client.Send(ctx, cm.Event); !cloudevents.IsACK(result) {
-      log.Fatalf("failed to send, %v", result)
-    }
+    cm.Send(ctx, client)
   },
 }
 
 func init() {
-  // MARK: - Flags
-
   SendEventCmd.Flags().StringVarP(&data, "data", "d", "", "The data payload to send in the CloudEvent")
-  SendEventCmd.Flags().BoolVar(&print, "dry-run", false, "")
-  SendEventCmd.Flags().BoolVar(&verbose, "verbose", false, "")
+  SendEventCmd.Flags().IntVar(&attempt, "attempts", 3, "Number of retry attempts")
+  SendEventCmd.Flags().IntVar(&timeout, "timeout", 1000, "Timeout between retry attempts in milliseconds")
+  SendEventCmd.Flags().BoolVar(&print, "dry-run", false, "Print the CloudEvent JSON without sending it")
+  SendEventCmd.Flags().BoolVar(&verbose, "verbose", false, "Enable verbose output")
 }

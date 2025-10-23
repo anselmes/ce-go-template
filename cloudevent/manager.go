@@ -4,14 +4,14 @@
 package cloudevent
 
 import (
-  "context"
-  "fmt"
-  "log"
-  "encoding/json"
-  "net/http"
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+	"time"
 
-  cloudevents "github.com/cloudevents/sdk-go/v2"
-  "github.com/google/uuid"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/google/uuid"
 )
 
 type callback func(event cloudevents.Event)
@@ -19,18 +19,42 @@ type callback func(event cloudevents.Event)
 type CloudEventManager struct {
   Message Message
   Event cloudevents.Event
+  retry int
+  timeout int
   uri string
   cetype string
 }
 
+func (cm *CloudEventManager) RetryCount() int { return cm.retry }
+func (cm *CloudEventManager) Timeout() time.Duration { return time.Duration(cm.timeout) }
+
+func (cm *CloudEventManager) SetRetry(count int) { cm.retry = count }
+func (cm *CloudEventManager) SetTimeout(time time.Duration) { cm.timeout = int(time) }
+
 func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
-  if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
-    err.Code = ErrSendFailed
-    err.Message = fmt.Sprintf("failed to send, %v", result)
-    log.Fatalln(err.Error())
-  } else {
-    log.Printf("sent: %v", cm.Event)
-    log.Printf("result: %v", result)
+  count := cm.retry
+  timeout := cm.timeout
+
+  for i := 0; i < count; i++ {
+    if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
+      err.Code = ErrSendFailed
+      err.Message = result.Error()
+      log.Fatalln(err.Error())
+      continue
+    } else if cloudevents.IsACK(result) {
+      log.Printf("Result: 200")
+      break
+    } else if cloudevents.IsNACK(result) {
+      err.Code = ErrNotAccepted
+      err.Message = result.Error()
+      log.Fatalln(err.Error())
+      continue
+    } else {
+      log.Printf("Result: %v", result)
+    }
+
+    time.Sleep(time.Duration(timeout) * time.Millisecond)
+    log.Printf("Retrying to send CloudEvent, attempt %d/%d", i+1, count)
   }
 }
 
@@ -95,6 +119,8 @@ func (cm *CloudEventManager) FromJson(bytes []byte) {
 }
 
 func NewCloudEventManager(msg Message, opts ...CloudEventOptions) *CloudEventManager {
+  cm := &CloudEventManager{Message: msg }
+
   event := cloudevents.NewEvent()
   event.SetID(uuid.New().String())
   source := "ce/uri"
@@ -113,10 +139,9 @@ func NewCloudEventManager(msg Message, opts ...CloudEventOptions) *CloudEventMan
   event.SetType(cetype)
   event.SetData(cloudevents.ApplicationJSON, msg)
 
-  return &CloudEventManager{
-    uri:     source,
-    cetype:  cetype,
-    Event:   event,
-    Message: msg,
-  }
+  cm.uri = source
+  cm.cetype = cetype
+  cm.Event = event
+
+  return cm
 }

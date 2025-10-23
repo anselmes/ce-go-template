@@ -4,10 +4,11 @@
 package cmd
 
 import (
-  "log"
+	"log"
 
-  "github.com/spf13/cobra"
-  . "github.com/anselmes/ce-go-template/cloudevent"
+	"github.com/spf13/cobra"
+
+	. "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var ListenEventCmd = &cobra.Command{
@@ -23,7 +24,7 @@ var ListenEventCmd = &cobra.Command{
       log.Fatalln(err.Error())
     }
 
-    log.Printf("Listening for CloudEvent...")
+    log.Printf("Listening for CloudEvent on %s...", url)
     log.Fatal(cm.Receive(ctx, client, cm.Display))
   },
 }

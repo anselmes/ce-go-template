@@ -4,14 +4,14 @@
 package cloudevent
 
 import (
-  "fmt"
-  "log"
-  "os"
 	"crypto/tls"
 	"crypto/x509"
-  "net/http"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
 
-  cloudevents "github.com/cloudevents/sdk-go/v2"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 type CloudEventClient struct {
@@ -20,16 +20,16 @@ type CloudEventClient struct {
   CertificateKey string
   Insecure bool
   Port    int
-  Scheme string
+  // Scheme string
   SkipVerify bool
   Config *tls.Config
 }
 
 func (cc CloudEventClient) Client() (cloudevents.Client, error) {
   var client cloudevents.Client
+  // cc.Scheme = "http"
 
   if cc.Insecure {
-    cc.Scheme = "http"
     log.Printf("Insecure mode enabled, skipping TLS verification")
 
     // Create protocol and client for insecure mode
@@ -39,14 +39,14 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
       err.Message = e.Error()
       return nil, err.Error()
     }
-    client, e = cloudevents.NewClient(protocol, cloudevents.WithTimeNow())
+    client, e = cloudevents.NewClient(protocol, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
     if e != nil {
       err.Code = ErrUnknown
       err.Message = e.Error()
       return nil, err.Error()
     }
   } else {
-    cc.Scheme = "https"
+    // cc.Scheme = "https"
     pool := x509.NewCertPool()
 
     // Configure a new http.Transport with TLS
@@ -90,7 +90,11 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
 }
 
 func (cc CloudEventClient) Url() string {
-  return fmt.Sprintf("%s://%s:%d", cc.Scheme, cc.Address, cc.Port)
+  scheme := "https"
+  if cc.Insecure {
+    scheme = "http"
+  }
+  return fmt.Sprintf("%s://%s:%d", scheme, cc.Address, cc.Port)
 }
 
 func (cc CloudEventClient) Transport() *http.Transport {

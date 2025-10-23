@@ -11,6 +11,7 @@ const (
   ErrTlsConfig
   ErrSendFailed
   ErrReceiveFailed
+  ErrNotAccepted
 )
 
 var err = CloudEventError{}
