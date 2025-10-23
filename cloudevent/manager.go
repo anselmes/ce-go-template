@@ -31,13 +31,9 @@ func (cm *CloudEventManager) Timeout() time.Duration { return time.Duration(cm.t
 func (cm *CloudEventManager) SetRetry(count int) { cm.retry = count }
 func (cm *CloudEventManager) SetTimeout(time time.Duration) { cm.timeout = int(time) }
 
-func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
+func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
   count := cm.retry
   timeout := cm.timeout
-
-  client, err := cc.Client(); if err != nil {
-    log.Fatalln(Error(ErrUnknown, err.Error()))
-  }
 
   for i := 0; i < count; i++ {
     result := client.Send(ctx, cm.Event)
