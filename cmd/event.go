@@ -10,39 +10,50 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/spf13/cobra"
 
-	. "github.com/anselmes/ce-go-template/cloudevent"
+	ev "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
   address string
   port int
-  url string
+  endpoint string
 
-  // ca string
   cert string
   key string
   insecure bool
   verify bool
 
   client cloudevents.Client
-  cc *CloudEventClient
-  cm *CloudEventManager
+  cc *ev.CloudEventClient
+  cm *ev.CloudEventManager
   ctx context.Context
 
-  err = CloudEventError{}
+  data string
+  err = ev.CloudEventError{}
 )
 
 // MARK: - Command
 
 var EventCmd = &cobra.Command{
   Use:   "event",
+  Aliases: []string{"ev", "evt"},
   Short: "Send & Receive CloudEvent",
   Long:  `
   Send and Receive a CloudEvent to and from a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
-    log.Printf("Hello from CE (%s)!", url)
-    // TODO: to sink using cm.Handle()
+    log.Printf("Hello from CE (%s)!", endpoint)
+
+    // host, node, opts := configSink()
+    // p, e := ceamqp.NewProtocol(host, node, []amqp.ConnOption{}, []amqp.SessionOption{}, opts...)
+    // if e != nil {
+    //   err.Code = ErrUnknown
+    //   err.Message = e.Error()
+    //   log.Fatalln(err.Error())
+    // }
+
+    // Close the connection when finished
+    // defer p.Close(context.Background())
   },
 }
 
@@ -50,21 +61,23 @@ func init() {
   EventCmd.PersistentFlags().StringVar(&address, "address", "localhost", "The address to listen on")
   EventCmd.PersistentFlags().IntVar(&port, "port", 8080, "The port to listen on")
 
-  EventCmd.PersistentFlags().BoolVar(&insecure, "insecure", false, "Disable TLS verification")
+  EventCmd.PersistentFlags().BoolVarP(&insecure, "insecure", "k", false, "Disable TLS verification")
   EventCmd.PersistentFlags().BoolVar(&verify, "verify", true, "Enable TLS verification")
-  // EventCmd.PersistentFlags().StringVar(&ca, "ca", "ca.crt", "Path to CA certificate file")
   EventCmd.PersistentFlags().StringVar(&cert, "cert", "tls-bundle.pem", "Path to TLS certificate file")
   EventCmd.PersistentFlags().StringVar(&key, "key", "tls-key.pem", "Path to TLS key file")
+
+  EventCmd.PersistentFlags().StringVarP(&data, "data", "d", "", "CloudEvent data payload to send")
 
   // MARK: - Sub Command
 
   EventCmd.AddCommand(SendEventCmd)
   EventCmd.AddCommand(ListenEventCmd)
+  EventCmd.AddCommand(EventWebhookCmd)
 }
 
 func initializeClient() error {
-  cm = NewCloudEventManager(Message{})
-  cc = &CloudEventClient{
+  cm = ev.NewCloudEventManager(ev.Message{})
+  cc = &ev.CloudEventClient{
     Address: address,
     Port: port,
     Certificate: cert,
@@ -73,15 +86,34 @@ func initializeClient() error {
     SkipVerify: !verify,
   }
 
-  url = cc.Url()
-  ctx = cloudevents.ContextWithTarget(context.Background(), url)
+  endpoint = cc.Url()
+  ctx = cloudevents.ContextWithTarget(context.Background(), endpoint)
 
   var e error
   if client, e = cc.Client(); e != nil {
-    err.Code = ErrUnknown
+    err.Code = ev.ErrUnknown
     err.Message = e.Error()
     return err.Error()
   }
 
   return nil
 }
+
+// Parse AMQP_URL env variable. Return server URL, AMQP node (from path) and SASLPlain
+// option if user/pass are present.
+// func configSink() (server, node string, opts []ceamqp.Option) {
+// 	env := os.Getenv("AMQP_URL")
+// 	if env == "" {
+// 		env = "/test"
+// 	}
+// 	u, err := url.Parse(env)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	if u.User != nil {
+// 		user := u.User.Username()
+// 		pass, _ := u.User.Password()
+// 		opts = append(opts, ceamqp.WithConnOpt(amqp.ConnSASLPlain(user, pass)))
+// 	}
+// 	return env, strings.TrimPrefix(u.Path, "/"), opts
+// }

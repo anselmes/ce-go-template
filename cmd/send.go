@@ -10,13 +10,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	. "github.com/anselmes/ce-go-template/cloudevent"
+	ev "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
-  data string
-  print bool
   attempt int
+  print bool
   timeout int
   verbose bool
 )
@@ -29,7 +28,7 @@ var SendEventCmd = &cobra.Command{
   `,
   Run: func(cmd *cobra.Command, args []string) {
     if e := initializeClient(); e != nil {
-      err.Code = ErrReceiveFailed
+      err.Code = ev.ErrReceiveFailed
       err.Message = e.Error()
       log.Fatalln(err.Error())
     }
@@ -58,7 +57,6 @@ var SendEventCmd = &cobra.Command{
 }
 
 func init() {
-  SendEventCmd.Flags().StringVarP(&data, "data", "d", "", "The data payload to send in the CloudEvent")
   SendEventCmd.Flags().IntVar(&attempt, "attempts", 3, "Number of retry attempts")
   SendEventCmd.Flags().IntVar(&timeout, "timeout", 1000, "Timeout between retry attempts in milliseconds")
   SendEventCmd.Flags().BoolVar(&print, "dry-run", false, "Print the CloudEvent JSON without sending it")
