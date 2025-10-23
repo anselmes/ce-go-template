@@ -5,6 +5,7 @@ package cloudevent
 
 import (
   "context"
+  "fmt"
   "log"
   "encoding/json"
   "net/http"
@@ -12,6 +13,8 @@ import (
   cloudevents "github.com/cloudevents/sdk-go/v2"
   "github.com/google/uuid"
 )
+
+type callback func(event cloudevents.Event)
 
 type CloudEventManager struct {
   Message Message
@@ -22,48 +25,26 @@ type CloudEventManager struct {
 
 func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
   if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
-    log.Fatalf("failed to send, %v", result)
+    err.Code = ErrSendFailed
+    err.Message = fmt.Sprintf("failed to send, %v", result)
+    log.Fatalln(err.Error())
   } else {
     log.Printf("sent: %v", cm.Event)
     log.Printf("result: %v", result)
   }
 }
 
-func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client) error {
-  err := client.StartReceiver(ctx, cm.onReceive)
-  if err != nil { log.Fatal("failed to start receiver: %v", err) }
+func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
+  e := client.StartReceiver(ctx, callback)
+  if e != nil {
+    err.Code = ErrReceiveFailed
+    err.Message = e.Error()
+    return err.Error()
+  }
   return nil
 }
 
-func (cm *CloudEventManager) Handler(w http.ResponseWriter, req *http.Request) error {
-  event, err := cloudevents.NewEventFromHTTPRequest(req)
-
-  if err != nil {
-    log.Printf("failed to parse CloudEvent from request: %v", err)
-    http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-    return err
-  }
-
-  w.Write([]byte(event.String()))
-  log.Println(event.String())
-
-  return nil
-}
-
-func (cm *CloudEventManager) Json() ([]byte, error) {
-  return json.Marshal(cm.Event)
-}
-
-func (cm *CloudEventManager) FromJson(bytes []byte) {
-  err := json.Unmarshal(bytes, &cm.Message)
-  if err != nil {
-    log.Fatalf("failed to unmarshal CloudEvent, %v", err)
-  }
-  cm.Event.SetData(cloudevents.ApplicationJSON, cm.Message)
-}
-
-// TODO: Process the received event
-func (cm *CloudEventManager) onReceive(event cloudevents.Event) {
+func (cm *CloudEventManager) Display(event cloudevents.Event) {
   log.Printf("Context Attributes,")
   log.Printf("  specversion: %s", event.SpecVersion())
   log.Printf("  type: %s", event.Type())
@@ -73,6 +54,45 @@ func (cm *CloudEventManager) onReceive(event cloudevents.Event) {
 
   log.Printf("Data,")
   log.Printf("  %s", string(event.Data()))
+}
+
+func (cm *CloudEventManager) Handler(w http.ResponseWriter, req *http.Request) error {
+  event, e := cloudevents.NewEventFromHTTPRequest(req)
+  if e != nil {
+    err.Code = ErrUnknown
+    err.Message = e.Error()
+
+    log.Fatalln(err.Error())
+    http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+
+    return err.Error()
+  }
+
+  w.Write([]byte(event.String()))
+  log.Println(event.String())
+
+  return nil
+}
+
+func (cm *CloudEventManager) Json() ([]byte, error) {
+  result, e := json.Marshal(cm.Event)
+  if e != nil {
+    err.Code = ErrInvalidFormat
+    err.Message = e.Error()
+    return nil, err.Error()
+  }
+  return result, nil
+}
+
+func (cm *CloudEventManager) FromJson(bytes []byte) {
+  e := json.Unmarshal(bytes, &cm.Message)
+  if e != nil {
+    err.Code = ErrInvalidFormat
+    err.Message = e.Error()
+    log.Fatalln(err.Error())
+    return
+  }
+  cm.Event.SetData(cloudevents.ApplicationJSON, cm.Message)
 }
 
 func NewCloudEventManager(msg Message, opts ...CloudEventOptions) *CloudEventManager {

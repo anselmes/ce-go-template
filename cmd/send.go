@@ -4,6 +4,7 @@
 package cmd
 
 import (
+  "context"
   "fmt"
   "log"
 
@@ -24,6 +25,11 @@ var SendEventCmd = &cobra.Command{
   Send a CloudEvent to a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
+    // Initialize client with current flag values
+    if err := initializeClient(); err != nil {
+      log.Fatalf("Failed to initialize client: %v", err)
+    }
+
     // MARK: - Dry Run
 
     if print {
@@ -43,11 +49,7 @@ var SendEventCmd = &cobra.Command{
 
     // MARK: - Submit
 
-    client, err := cloudevents.NewClientHTTP()
-    if err != nil {
-      log.Fatalf("failed to create client, %v", err)
-    }
-
+    ctx := cloudevents.ContextWithTarget(context.Background(), url)
     if result := client.Send(ctx, cm.Event); !cloudevents.IsACK(result) {
       log.Fatalf("failed to send, %v", result)
     }

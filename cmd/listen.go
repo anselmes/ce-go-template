@@ -5,9 +5,7 @@ package cmd
 
 import (
   "log"
-
   "github.com/spf13/cobra"
-  cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
 var ListenEventCmd = &cobra.Command{
@@ -17,14 +15,10 @@ var ListenEventCmd = &cobra.Command{
   Listen CloudEvent from a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
-    log.Printf("Listening for CloudEvent...")
-
-    // FIXME: The default client is HTTP.
-    client, err := cloudevents.NewClientHTTP()
-    if err != nil {
-      log.Fatalf("failed to create client, %v", err)
+    if err := initializeClient(); err != nil {
+      log.Fatalf("Failed to initialize client: %v", err)
     }
-
-    log.Fatal(cm.Receive(ctx, client))
+    log.Printf("Listening for CloudEvent...")
+    log.Fatal(cm.Receive(ctx, client, cm.Display))
   },
 }
