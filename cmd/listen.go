@@ -24,6 +24,6 @@ var ListenEventCmd = &cobra.Command{
     }
 
     log.Printf("Listening for CloudEvent on %s...", endpoint)
-    log.Fatal(cm.Receive(ctx, client, cm.Display))
+    log.Fatal(cm.Receive(ctx, client, cm.Display, cc))
   },
 }

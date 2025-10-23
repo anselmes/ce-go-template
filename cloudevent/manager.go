@@ -5,7 +5,9 @@ package cloudevent
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -66,12 +68,46 @@ func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client
   }
 }
 
-// FIXME: TLS & rename to Listen
-func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
-  if err := client.StartReceiver(ctx, callback); err != nil {
-    return Error(ErrReceiveFailed, err.Error())
-  }
-  return nil
+// Receive starts an HTTP(S) server to listen for incoming CloudEvents
+func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback, cc *CloudEventClient) error {
+	// Create HTTP server
+	server := &http.Server{
+		Addr: fmt.Sprintf("%s:%d", cc.Address, cc.Port),
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			event, err := cloudevents.NewEventFromHTTPRequest(r)
+			if err != nil {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
+				return
+			}
+			callback(*event)
+			w.WriteHeader(http.StatusOK)
+		}),
+	}
+
+	// Start server with or without TLS
+	var err error
+	if cc.Insecure {
+		log.Printf("Starting HTTP server on %s:%d", cc.Address, cc.Port)
+		err = server.ListenAndServe()
+	} else {
+		// Load TLS configuration
+		cert, loadErr := tls.LoadX509KeyPair(cc.Certificate, cc.CertificateKey)
+		if loadErr != nil {
+			return Error(ErrTlsConfig, fmt.Sprintf("Failed to load TLS certificates: %v", loadErr))
+		}
+
+		server.TLSConfig = &tls.Config{
+			Certificates: []tls.Certificate{cert},
+		}
+		log.Printf("Starting HTTPS server on %s:%d", cc.Address, cc.Port)
+		err = server.ListenAndServeTLS("", "")
+	}
+
+	if err != nil && err != http.ErrServerClosed {
+		return Error(ErrReceiveFailed, fmt.Sprintf("Server failed: %v", err))
+	}
+
+	return nil
 }
 
 func (cm *CloudEventManager) Display(event cloudevents.Event) {
