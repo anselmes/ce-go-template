@@ -25,6 +25,7 @@ type CloudEventManager struct {
   timeout int
   uri string
   cetype string
+  callback callback
 }
 
 func (cm *CloudEventManager) RetryCount() int { return cm.retry }
@@ -32,6 +33,7 @@ func (cm *CloudEventManager) Timeout() time.Duration { return time.Duration(cm.t
 
 func (cm *CloudEventManager) SetRetry(count int) { cm.retry = count }
 func (cm *CloudEventManager) SetTimeout(time time.Duration) { cm.timeout = int(time) }
+func (cm *CloudEventManager) SetCallback(cb callback) { cm.callback = cb }
 
 func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
   count := cm.retry
@@ -68,26 +70,18 @@ func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client
   }
 }
 
-// Receive starts an HTTP(S) server to listen for incoming CloudEvents
-func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback, cc *CloudEventClient) error {
-	// Create HTTP server
+func (cm *CloudEventManager) Listen(ctx context.Context, cc *CloudEventClient, callback callback) error {
+	cm.SetCallback(callback)
+
 	server := &http.Server{
-		Addr: fmt.Sprintf("%s:%d", cc.Address, cc.Port),
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			event, err := cloudevents.NewEventFromHTTPRequest(r)
-			if err != nil {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
-				return
-			}
-			callback(*event)
-			w.WriteHeader(http.StatusOK)
-		}),
+		Addr:    fmt.Sprintf("%s:%d", cc.Address, cc.Port),
+		Handler: cm.Handler(),
 	}
 
-	// Start server with or without TLS
+  log.Printf("Starting server on %s", cc.Url())
+
 	var err error
 	if cc.Insecure {
-		log.Printf("Starting HTTP server on %s:%d", cc.Address, cc.Port)
 		err = server.ListenAndServe()
 	} else {
 		// Load TLS configuration
@@ -95,11 +89,7 @@ func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Cli
 		if loadErr != nil {
 			return Error(ErrTlsConfig, fmt.Sprintf("Failed to load TLS certificates: %v", loadErr))
 		}
-
-		server.TLSConfig = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-		}
-		log.Printf("Starting HTTPS server on %s:%d", cc.Address, cc.Port)
+		server.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
 		err = server.ListenAndServeTLS("", "")
 	}
 
@@ -107,6 +97,13 @@ func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Cli
 		return Error(ErrReceiveFailed, fmt.Sprintf("Server failed: %v", err))
 	}
 
+	return nil
+}
+
+func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
+	if err := client.StartReceiver(ctx, callback); err != nil {
+		return Error(ErrReceiveFailed, err.Error())
+	}
 	return nil
 }
 
@@ -128,14 +125,18 @@ func (cm *CloudEventManager) Handler() http.Handler {
 
     event, err := cloudevents.NewEventFromHTTPRequest(req)
     if err != nil {
-      result := Error(ErrUnknown, err.Error())
-      log.Fatalln(result)
       http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-      log.Fatalln(result)
+      return
     }
 
-    w.Write([]byte(event.String()))
-    log.Println(event.String())
+    // Use the callback if set, otherwise use Display as default
+    if cm.callback != nil {
+      cm.callback(*event)
+    } else {
+      cm.Display(*event)
+    }
+
+    w.WriteHeader(http.StatusOK)
   })
 }
 
