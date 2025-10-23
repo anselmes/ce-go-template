@@ -29,7 +29,6 @@ var (
   ctx context.Context
 
   data string
-  err = ev.CloudEventError{}
 )
 
 // MARK: - Command
@@ -89,11 +88,9 @@ func initializeClient() error {
   endpoint = cc.Url()
   ctx = cloudevents.ContextWithTarget(context.Background(), endpoint)
 
-  var e error
-  if client, e = cc.Client(); e != nil {
-    err.Code = ev.ErrUnknown
-    err.Message = e.Error()
-    return err.Error()
+  var err error
+  if client, err = cc.Client(); err != nil {
+    return ev.Error(ev.ErrUnknown, err.Error())
   }
 
   return nil

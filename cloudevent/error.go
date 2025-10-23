@@ -3,7 +3,9 @@
 
 package cloudevent
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const (
   ErrUnknown CloudEventErrorCodes = iota + 1
@@ -15,7 +17,6 @@ const (
   ErrNotAccepted
 )
 
-var err = CloudEventError{}
 type CloudEventErrorCodes int
 
 type CloudEventError struct {
@@ -25,4 +26,17 @@ type CloudEventError struct {
 
 func (e *CloudEventError) Error() error {
   return fmt.Errorf("CloudEventError - %d: %s", e.Code, e.Message)
+}
+
+func Error(code CloudEventErrorCodes, msg ...string) error {
+  err := CloudEventError{}
+  err.Code = code
+
+  if len(msg) == 0 {
+    err.Message = "An unknown error occurred"
+  } else {
+    err.Message = msg[0]
+  }
+
+  return err.Error()
 }

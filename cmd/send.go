@@ -27,10 +27,8 @@ var SendEventCmd = &cobra.Command{
   Send a CloudEvent to a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
-    if e := initializeClient(); e != nil {
-      err.Code = ev.ErrReceiveFailed
-      err.Message = e.Error()
-      log.Fatalln(err.Error())
+    if err := initializeClient(); err != nil {
+      log.Fatalln(ev.Error(ev.ErrReceiveFailed, err.Error()))
     }
 
     if print {

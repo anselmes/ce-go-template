@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	ev "github.com/anselmes/ce-go-template/cloudevent"
 	"github.com/anselmes/ce-go-template/cmd"
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ var (
 
 func Execute() {
   if err := RootCmd.Execute(); err != nil {
-    log.Fatal(err)
+    log.Fatal(ev.Error(ev.ErrUnknown, err.Error()))
     os.Exit(1)
   }
 }

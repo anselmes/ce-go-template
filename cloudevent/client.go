@@ -31,33 +31,25 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
     log.Printf("Insecure mode enabled, skipping TLS verification")
 
     // Create protocol and client for insecure mode
-    protocol, e := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()))
-    if e != nil {
-      err.Code = ErrUnknown
-      err.Message = e.Error()
-      return nil, err.Error()
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()))
+    if err != nil {
+      return nil, Error(ErrUnknown, err.Error())
     }
-    client, e = cloudevents.NewClient(protocol, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
-    if e != nil {
-      err.Code = ErrUnknown
-      err.Message = e.Error()
-      return nil, err.Error()
+    client, err = cloudevents.NewClient(protocol, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+    if err != nil {
+      return nil, Error(ErrUnknown, err.Error())
     }
   } else {
     pool := x509.NewCertPool()
 
     // Configure a new http.Transport with TLS
-    cert, e := tls.LoadX509KeyPair(cc.Certificate, cc.CertificateKey)
-    if e != nil {
-      err.Code = ErrTlsConfig
-      err.Message = e.Error()
-      return nil, err.Error()
+    cert, err := tls.LoadX509KeyPair(cc.Certificate, cc.CertificateKey)
+    if err != nil {
+      return nil, Error(ErrTlsConfig, err.Error())
     }
-    ca, e := os.ReadFile(cc.Certificate)
-    if e != nil {
-      err.Code = ErrTlsConfig
-      err.Message = e.Error()
-      return nil, err.Error()
+    ca, err := os.ReadFile(cc.Certificate)
+    if err != nil {
+      return nil, Error(ErrTlsConfig, err.Error())
     }
 
     pool.AppendCertsFromPEM(ca)
@@ -69,17 +61,13 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
     }
 
     // Create protocol and client
-    protocol, e := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()), cloudevents.WithRoundTripper(cc.Transport()))
-    if e != nil {
-      err.Code = ErrUnknown
-      err.Message = e.Error()
-      return nil, err.Error()
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()), cloudevents.WithRoundTripper(cc.Transport()))
+    if err != nil {
+      return nil, Error(ErrUnknown, err.Error())
     }
-    client, e = cloudevents.NewClient(protocol, cloudevents.WithTimeNow())
-    if e != nil {
-      err.Code = ErrUnknown
-      err.Message = e.Error()
-      return nil, err.Error()
+    client, err = cloudevents.NewClient(protocol, cloudevents.WithTimeNow())
+    if err != nil {
+      return nil, Error(ErrUnknown, err.Error())
     }
   }
 

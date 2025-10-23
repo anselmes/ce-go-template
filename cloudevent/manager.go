@@ -35,25 +35,19 @@ func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
   count := cm.retry
   timeout := cm.timeout
 
-  client, e := cc.Client(); if e != nil {
-    err.Code = ErrUnknown
-    err.Message = e.Error()
-    log.Fatalln(err.Error())
+  client, err := cc.Client(); if err != nil {
+    log.Fatalln(Error(ErrUnknown, err.Error()))
   }
 
   for i := 0; i < count; i++ {
     if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
-      err.Code = ErrSendFailed
-      err.Message = result.Error()
-      log.Fatalln(err.Error())
+      log.Fatalln(Error(ErrSendFailed, err.Error()))
       continue
     } else if cloudevents.IsACK(result) {
       log.Printf("Result: 200")
       break
     } else if cloudevents.IsNACK(result) {
-      err.Code = ErrNotAccepted
-      err.Message = result.Error()
-      log.Fatalln(err.Error())
+      log.Fatalln(Error(ErrNotAccepted, err.Error()))
       continue
     } else {
       log.Printf("Result: %v", result)
@@ -66,10 +60,8 @@ func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
 
 // FIXME: TLS & rename to Listen
 func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
-  if e := client.StartReceiver(ctx, callback); e != nil {
-    err.Code = ErrReceiveFailed
-    err.Message = e.Error()
-    return err.Error()
+  if err := client.StartReceiver(ctx, callback); err != nil {
+    return Error(ErrReceiveFailed, err.Error())
   }
   return nil
 }
@@ -87,15 +79,12 @@ func (cm *CloudEventManager) Display(event cloudevents.Event) {
 }
 
 func (cm *CloudEventManager) Handler(w http.ResponseWriter, req *http.Request) error {
-  event, e := cloudevents.NewEventFromHTTPRequest(req)
-  if e != nil {
-    err.Code = ErrUnknown
-    err.Message = e.Error()
-
-    log.Fatalln(err.Error())
+  event, err := cloudevents.NewEventFromHTTPRequest(req)
+  if err != nil {
+    result := Error(ErrUnknown, err.Error())
+    log.Fatalln(result)
     http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-
-    return err.Error()
+    return result
   }
 
   w.Write([]byte(event.String()))
@@ -105,21 +94,17 @@ func (cm *CloudEventManager) Handler(w http.ResponseWriter, req *http.Request) e
 }
 
 func (cm *CloudEventManager) Json() ([]byte, error) {
-  result, e := json.Marshal(cm.Event)
-  if e != nil {
-    err.Code = ErrInvalidFormat
-    err.Message = e.Error()
-    return nil, err.Error()
+  result, err := json.Marshal(cm.Event)
+  if err != nil {
+    return nil, Error(ErrInvalidFormat, err.Error())
   }
   return result, nil
 }
 
 func (cm *CloudEventManager) FromJson(bytes []byte) {
-  e := json.Unmarshal(bytes, &cm.Message)
-  if e != nil {
-    err.Code = ErrInvalidFormat
-    err.Message = e.Error()
-    log.Fatalln(err.Error())
+  err := json.Unmarshal(bytes, &cm.Message)
+  if err != nil {
+    log.Fatalln(Error(ErrInvalidFormat, err.Error()))
     return
   }
   cm.Event.SetData(cloudevents.ApplicationJSON, cm.Message)

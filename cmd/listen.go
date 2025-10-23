@@ -19,10 +19,8 @@ var ListenEventCmd = &cobra.Command{
   Listen CloudEvent from a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
-    if e := initializeClient(); e != nil {
-      err.Code = ev.ErrReceiveFailed
-      err.Message = e.Error()
-      log.Fatalln(err.Error())
+    if err := initializeClient(); err != nil {
+      log.Fatalln(ev.Error(ev.ErrReceiveFailed, err.Error()))
     }
 
     log.Printf("Listening for CloudEvent on %s...", endpoint)

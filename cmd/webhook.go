@@ -5,7 +5,9 @@ package cmd
 
 import (
 	"log"
+	"net/http"
 
+	ev "github.com/anselmes/ce-go-template/cloudevent"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +27,10 @@ var EventWebhookCmd = &cobra.Command {
     log.Println("Sink:", sink)
     // TODO:
     // http listener
+    err := http.ListenAndServe(cc.Url(), nil)
+    if err != nil {
+      log.Fatalln(ev.Error(ev.ErrUnknown, err.Error()))
+    }
     // on receive, send
   },
 }
@@ -37,3 +43,5 @@ func init() {
 //   log.Println("Sending CloudEvent via Webhook...")
 //   cm.Handler(writer, request)
 // }
+
+// func receive(_ context.Context, event cloudevents.Event) { cm.Display(event) }
