@@ -40,21 +40,33 @@ func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
   }
 
   for i := 0; i < count; i++ {
-    if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
-      log.Fatalln(Error(ErrSendFailed, err.Error()))
-      continue
-    } else if cloudevents.IsACK(result) {
+    result := client.Send(ctx, cm.Event)
+
+    if cloudevents.IsACK(result) {
       log.Printf("Result: 200")
-      break
+      break // Success - exit retry loop
     } else if cloudevents.IsNACK(result) {
-      log.Fatalln(Error(ErrNotAccepted, err.Error()))
-      continue
+      log.Printf("CloudEvent was rejected: %v", result)
+      if i == count-1 {
+        log.Fatalln(Error(ErrNotAccepted, result.Error()))
+      }
+    } else if cloudevents.IsUndelivered(result) {
+      log.Printf("CloudEvent delivery failed: %v", result)
+      if i == count-1 {
+        log.Fatalln(Error(ErrSendFailed, result.Error()))
+      }
     } else {
       log.Printf("Result: %v", result)
+      if i == count-1 {
+        log.Printf("Exhausted all retry attempts")
+      }
     }
 
-    time.Sleep(time.Duration(timeout) * time.Millisecond)
-    log.Printf("Retrying to send CloudEvent, attempt %d/%d", i+1, count)
+    // Only sleep and retry if this isn't the last attempt
+    if i < count-1 {
+      time.Sleep(time.Duration(timeout) * time.Millisecond)
+      log.Printf("Retrying to send CloudEvent, attempt %d/%d", i+1, count)
+    }
   }
 }
 

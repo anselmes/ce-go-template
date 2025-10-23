@@ -16,6 +16,7 @@ import (
 var (
   attempt int
   print bool
+  retry bool
   timeout int
   verbose bool
 )
@@ -41,12 +42,20 @@ var SendEventCmd = &cobra.Command{
     }
 
     if data != "" { cm.FromJson([]byte(data)) }
-    cm.SetRetry(attempt)
-    cm.SetTimeout(time.Duration(1000))
+
+    if retry {
+      log.Printf("Retry enabled: %d attempts with %d ms timeout", attempt, timeout)
+      cm.SetRetry(attempt)
+      cm.SetTimeout(time.Duration(timeout))
+    } else {
+      // Default to single attempt when retry is disabled
+      cm.SetRetry(1)
+      cm.SetTimeout(time.Duration(1000))
+    }
+
+    log.Printf("Sending CloudEvent...")
 
     if verbose {
-      log.Printf("Sending CloudEvent...")
-      log.Printf("Retry enabled: %d attempts with %d ms timeout", attempt, timeout)
       log.Println(cm.Event)
     }
 
@@ -55,6 +64,7 @@ var SendEventCmd = &cobra.Command{
 }
 
 func init() {
+  SendEventCmd.Flags().BoolVar(&retry, "retry", false, "Enable retry mechanism")
   SendEventCmd.Flags().IntVar(&attempt, "attempts", 3, "Number of retry attempts")
   SendEventCmd.Flags().IntVar(&timeout, "timeout", 1000, "Timeout between retry attempts in milliseconds")
   SendEventCmd.Flags().BoolVar(&print, "dry-run", false, "Print the CloudEvent JSON without sending it")
