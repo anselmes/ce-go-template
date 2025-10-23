@@ -64,7 +64,7 @@ func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
   }
 }
 
-// FIXME: TLS
+// FIXME: TLS & rename to Listen
 func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
   if e := client.StartReceiver(ctx, callback); e != nil {
     err.Code = ErrReceiveFailed

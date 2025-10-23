@@ -86,6 +86,7 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
   return client, nil
 }
 
+// TODO: return url.URL
 func (cc CloudEventClient) Url() string {
   scheme := "https"
   if cc.Insecure { scheme = "http" }

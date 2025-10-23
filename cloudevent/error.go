@@ -8,6 +8,7 @@ import "fmt"
 const (
   ErrUnknown CloudEventErrorCodes = iota + 1
   ErrInvalidFormat
+  ErrInvalidURL
   ErrTlsConfig
   ErrSendFailed
   ErrReceiveFailed
