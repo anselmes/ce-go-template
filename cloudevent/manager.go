@@ -31,9 +31,15 @@ func (cm *CloudEventManager) Timeout() time.Duration { return time.Duration(cm.t
 func (cm *CloudEventManager) SetRetry(count int) { cm.retry = count }
 func (cm *CloudEventManager) SetTimeout(time time.Duration) { cm.timeout = int(time) }
 
-func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
+func (cm *CloudEventManager) Send(ctx context.Context, cc CloudEventClient) {
   count := cm.retry
   timeout := cm.timeout
+
+  client, e := cc.Client(); if e != nil {
+    err.Code = ErrUnknown
+    err.Message = e.Error()
+    log.Fatalln(err.Error())
+  }
 
   for i := 0; i < count; i++ {
     if result := client.Send(ctx, cm.Event); cloudevents.IsUndelivered(result) {
@@ -58,6 +64,7 @@ func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client
   }
 }
 
+// FIXME: TLS
 func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
   if e := client.StartReceiver(ctx, callback); e != nil {
     err.Code = ErrReceiveFailed

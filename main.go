@@ -3,4 +3,6 @@
 
 package main
 
-func main()  { Execute() }
+import "github.com/anselmes/ce-go-template/cli"
+
+func main()  { cli.Execute() }

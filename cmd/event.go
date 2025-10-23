@@ -4,13 +4,13 @@
 package cmd
 
 import (
-  "context"
-  "log"
+	"context"
+	"log"
 
-  "github.com/spf13/cobra"
-  cloudevents "github.com/cloudevents/sdk-go/v2"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/spf13/cobra"
 
-  . "github.com/anselmes/ce-go-template/cloudevent"
+	. "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
   port int
   url string
 
-  ca string
+  // ca string
   cert string
   key string
   insecure bool
@@ -52,9 +52,9 @@ func init() {
 
   EventCmd.PersistentFlags().BoolVar(&insecure, "insecure", false, "Disable TLS verification")
   EventCmd.PersistentFlags().BoolVar(&verify, "verify", true, "Enable TLS verification")
-  EventCmd.PersistentFlags().StringVar(&ca, "ca", "ca.crt", "Path to CA certificate file")
-  EventCmd.PersistentFlags().StringVar(&cert, "cert", "tls.crt", "Path to TLS certificate file")
-  EventCmd.PersistentFlags().StringVar(&key, "key", "tls.key", "Path to TLS key file")
+  // EventCmd.PersistentFlags().StringVar(&ca, "ca", "ca.crt", "Path to CA certificate file")
+  EventCmd.PersistentFlags().StringVar(&cert, "cert", "tls-bundle.pem", "Path to TLS certificate file")
+  EventCmd.PersistentFlags().StringVar(&key, "key", "tls-key.pem", "Path to TLS key file")
 
   // MARK: - Sub Command
 

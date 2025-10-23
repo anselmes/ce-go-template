@@ -53,7 +53,7 @@ var SendEventCmd = &cobra.Command{
       log.Println(cm.Event)
     }
 
-    cm.Send(ctx, client)
+    cm.Send(ctx, *cc)
   },
 }
 

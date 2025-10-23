@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 // Copyright (c) 2025 Schubert Anselme <schubert@anselm.es>
 
-package main
+package cli
 
 import (
-  "log"
-  "os"
+	"log"
+	"os"
 
-  "github.com/spf13/cobra"
-  "github.com/anselmes/ce-go-template/cmd"
+	"github.com/anselmes/ce-go-template/cmd"
+	"github.com/spf13/cobra"
 )
 
 var (
-  rootCmd = &cobra.Command {
+  RootCmd = &cobra.Command {
     Use: "cecli",
     Short: "A CloudEvents CLI tool",
     Long: `
@@ -22,13 +22,13 @@ var (
 )
 
 func Execute() {
-  if err := rootCmd.Execute(); err != nil {
+  if err := RootCmd.Execute(); err != nil {
     log.Fatal(err)
     os.Exit(1)
   }
 }
 
 func init() {
-  rootCmd.AddCommand(cmd.VersionCmd)
-  rootCmd.AddCommand(cmd.EventCmd)
+  RootCmd.AddCommand(cmd.VersionCmd)
+  RootCmd.AddCommand(cmd.EventCmd)
 }
