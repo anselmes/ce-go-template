@@ -35,8 +35,7 @@ func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client
 }
 
 func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
-  e := client.StartReceiver(ctx, callback)
-  if e != nil {
+  if e := client.StartReceiver(ctx, callback); e != nil {
     err.Code = ErrReceiveFailed
     err.Message = e.Error()
     return err.Error()

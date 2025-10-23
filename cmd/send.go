@@ -10,6 +10,8 @@ import (
 
   "github.com/spf13/cobra"
   cloudevents "github.com/cloudevents/sdk-go/v2"
+
+  . "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
@@ -25,9 +27,10 @@ var SendEventCmd = &cobra.Command{
   Send a CloudEvent to a specified target.
   `,
   Run: func(cmd *cobra.Command, args []string) {
-    // Initialize client with current flag values
-    if err := initializeClient(); err != nil {
-      log.Fatalf("Failed to initialize client: %v", err)
+    if e := initializeClient(); e != nil {
+      err.Code = ErrReceiveFailed
+      err.Message = e.Error()
+      log.Fatalln(err.Error())
     }
 
     // MARK: - Dry Run

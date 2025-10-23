@@ -77,8 +77,7 @@ func initializeClient() error {
   ctx = cloudevents.ContextWithTarget(context.Background(), url)
 
   var e error
-  client, e = cc.Client()
-  if e != nil {
+  if client, e = cc.Client(); e != nil {
     err.Code = ErrUnknown
     err.Message = e.Error()
     return err.Error()
