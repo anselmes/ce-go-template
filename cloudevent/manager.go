@@ -78,19 +78,21 @@ func (cm *CloudEventManager) Display(event cloudevents.Event) {
   log.Printf("  %s", string(event.Data()))
 }
 
-func (cm *CloudEventManager) Handler(w http.ResponseWriter, req *http.Request) error {
-  event, err := cloudevents.NewEventFromHTTPRequest(req)
-  if err != nil {
-    result := Error(ErrUnknown, err.Error())
-    log.Fatalln(result)
-    http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-    return result
-  }
+func (cm *CloudEventManager) Handler() http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received HTTP request for CloudEvent")
 
-  w.Write([]byte(event.String()))
-  log.Println(event.String())
+    event, err := cloudevents.NewEventFromHTTPRequest(req)
+    if err != nil {
+      result := Error(ErrUnknown, err.Error())
+      log.Fatalln(result)
+      http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+      log.Fatalln(result)
+    }
 
-  return nil
+    w.Write([]byte(event.String()))
+    log.Println(event.String())
+  })
 }
 
 func (cm *CloudEventManager) Json() ([]byte, error) {
