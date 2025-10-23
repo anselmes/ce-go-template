@@ -47,6 +47,23 @@ intermediate:
       ST: Toronto                  # State/Province: Toronto (matching root CA)
       O: CloudEvent                # Organization: CloudEvent (matching root CA)
       OU: Certificate Authority    # Organizational Unit: Certificate Authority division
+amqp:
+  CN: amqp.default.svc.cluster.local  # Common Name: identifies the certificate
+  key:
+    algo: rsa   # Algorithm: RSA for compatibility
+    size: 4096  # Key size: 4096 bits matching root CA security level
+  names:
+    - C: CA                        # Country: Canada (matching root CA)
+      L: ON                        # Locality: Ontario (matching root CA)
+      ST: Toronto                  # State/Province: Toronto (matching root CA)
+      O: CloudEvent                # Organization: CloudEvent (matching root CA)
+      OU: Certificate Authority    # Organizational Unit: Certificate Authority division
+  hosts:
+    - amqp.default.svc.cluster.local
+    - amqp.default.svc.cluster
+    - amqp.default.svc
+    - amqp.default
+    - amqp.local
 tls:
   CN: localhost  # Common Name: identifies the certificate
   key:
