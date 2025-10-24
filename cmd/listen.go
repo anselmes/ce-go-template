@@ -6,9 +6,8 @@ package cmd
 import (
 	"log"
 
+	event "github.com/anselmes/ce-go-template/event"
 	"github.com/spf13/cobra"
-
-	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var ListenEventCmd = &cobra.Command{

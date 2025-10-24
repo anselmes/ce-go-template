@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	event "github.com/anselmes/ce-go-template/cloudevent"
+	event "github.com/anselmes/ce-go-template/event"
 	"github.com/spf13/cobra"
 )
 

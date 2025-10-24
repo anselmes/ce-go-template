@@ -11,6 +11,7 @@ all: build
 build:
 	mkdir -p .build
 	go build -ldflags "$(LDFLAGS)" -o .build/$(NAME) .
+	source <(cecli completion zsh)
 
 clean:
 	go clean .

@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
-	event "github.com/anselmes/ce-go-template/cloudevent"
 	"github.com/anselmes/ce-go-template/cmd"
+	event "github.com/anselmes/ce-go-template/event"
 	"github.com/spf13/cobra"
 )
 

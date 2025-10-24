@@ -6,10 +6,9 @@ package cmd
 import (
 	"context"
 
+	event "github.com/anselmes/ce-go-template/event"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/spf13/cobra"
-
-	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (

@@ -8,9 +8,8 @@ import (
 	"log"
 	"time"
 
+	event "github.com/anselmes/ce-go-template/event"
 	"github.com/spf13/cobra"
-
-	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
