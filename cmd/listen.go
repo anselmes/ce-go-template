@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	ev "github.com/anselmes/ce-go-template/cloudevent"
+	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var ListenEventCmd = &cobra.Command{
@@ -20,10 +20,10 @@ var ListenEventCmd = &cobra.Command{
   `,
   Run: func(cmd *cobra.Command, args []string) {
     if err := initializeClient(); err != nil {
-      log.Fatalln(ev.Error(ev.ErrReceiveFailed, err.Error()))
+      log.Fatalln(event.Error(event.ErrReceiveFailed, err.Error()))
     }
 
     log.Printf("Listening for CloudEvent on %s...", endpoint)
-    log.Fatal(cm.Listen(ctx, cc, cm.Display))
+    log.Fatal(manager.Listen(ctx, config, manager.Display))
   },
 }

@@ -15,24 +15,24 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 )
 
-type CloudEventClient struct {
-  Address string
-  Certificate string
-  CertificateKey string
-  Insecure bool
-  Port    int
-  SkipVerify bool
+type CloudEventConfig struct {
+  Address string `envconfig:"CE_ADDRESS" default:"localhost"`
+  Certificate string `envconfig:"CE_CERT" default:"tls-bundle.pem"`
+  CertificateKey string `envconfig:"CE_KEY" default:"tls-key.pem"`
+  Insecure bool `envconfig:"CE_INSECURE" default:"false"`
+  Port    int `envconfig:"CE_PORT" default:"8080"`
+  SkipVerify bool `envconfig:"CE_SKIP_VERIFY" default:"false"`
   Config *tls.Config
 }
 
-func (cc CloudEventClient) Client() (cloudevents.Client, error) {
+func (config CloudEventConfig) Client() (cloudevents.Client, error) {
   var client cloudevents.Client
 
-  if cc.Insecure {
+  if config.Insecure {
     log.Printf("Insecure mode enabled, skipping TLS verification")
 
     // Create protocol and client for insecure mode
-    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url().String()))
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(config.Url().String()))
     if err != nil {
       return nil, Error(ErrUnknown, err.Error())
     }
@@ -44,25 +44,26 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
     pool := x509.NewCertPool()
 
     // Configure a new http.Transport with TLS
-    cert, err := tls.LoadX509KeyPair(cc.Certificate, cc.CertificateKey)
+    cert, err := tls.LoadX509KeyPair(config.Certificate, config.CertificateKey)
     if err != nil {
       return nil, Error(ErrTlsConfig, err.Error())
     }
-    ca, err := os.ReadFile(cc.Certificate)
+
+    ca, err := os.ReadFile(config.Certificate)
     if err != nil {
       return nil, Error(ErrTlsConfig, err.Error())
     }
 
     pool.AppendCertsFromPEM(ca)
 
-    cc.Config = &tls.Config{
+    config.Config = &tls.Config{
       Certificates:       []tls.Certificate{cert},
       RootCAs:            pool,
-      InsecureSkipVerify: cc.SkipVerify,
+      InsecureSkipVerify: config.SkipVerify,
     }
 
     // Create protocol and client
-    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url().String()), cloudevents.WithRoundTripper(cc.Transport()))
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(config.Url().String()), cloudevents.WithRoundTripper(config.Transport()))
     if err != nil {
       return nil, Error(ErrUnknown, err.Error())
     }
@@ -75,17 +76,17 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
   return client, nil
 }
 
-func (cc CloudEventClient) Url() *url.URL {
+func (config CloudEventConfig) Url() *url.URL {
   scheme := "https"
-  if cc.Insecure {
+  if config.Insecure {
     scheme = "http"
   }
   return &url.URL{
     Scheme: scheme,
-    Host:   fmt.Sprintf("%s:%d", cc.Address, cc.Port),
+    Host:   fmt.Sprintf("%s:%d", config.Address, config.Port),
   }
 }
 
-func (cc CloudEventClient) Transport() *http.Transport {
-  return &http.Transport{TLSClientConfig: cc.Config}
+func (config CloudEventConfig) Transport() *http.Transport {
+  return &http.Transport{TLSClientConfig: config.Config}
 }

@@ -6,12 +6,6 @@
 make build
 ```
 
-### Cleanup
-
-```shell
-make clean
-```
-
 ## TLS
 
 ```shell
@@ -20,28 +14,25 @@ make ca
 make tls
 ```
 
-## Using
+## Usage
 
 - install [krew](https://krew.sigs.k8s.io)
 - install [kubectl](https://kubernetes.io/docs/tasks/tools)
 - install [kubernetes](https://kubernetes.io)
 
-### RabbitMQ
-
-```shell
-kubectl krew install rabbitmq
-kubectl rabbitmq install-cluster-operator
-
-make amqp
-```
+  ```shell
+  # set environment variables
+  cp -f env.example .env
+  source .env
+  ```
 
 ### Event Webhook
 
 ```shell
-.build/cecli event webhook
+cecli event webhook
 
 # using cli
-.build/cecli event send -d '{"key": "value"}'
+cecli event send -d '{"key": "value"}'
 
 # using curl
 curl -X POST http://localhost:8080 \
@@ -64,4 +55,10 @@ curl -X POST http://localhost:8080 \
 
 ```shell
 .build/cecli event send -d '{"hello": "world"}'
+```
+
+## Cleanup
+
+```shell
+make clean
 ```

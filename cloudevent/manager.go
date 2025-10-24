@@ -28,19 +28,19 @@ type CloudEventManager struct {
   callback callback
 }
 
-func (cm *CloudEventManager) RetryCount() int { return cm.retry }
-func (cm *CloudEventManager) Timeout() time.Duration { return time.Duration(cm.timeout) }
+func (manager *CloudEventManager) RetryCount() int { return manager.retry }
+func (manager *CloudEventManager) Timeout() time.Duration { return time.Duration(manager.timeout) }
 
-func (cm *CloudEventManager) SetRetry(count int) { cm.retry = count }
-func (cm *CloudEventManager) SetTimeout(time time.Duration) { cm.timeout = int(time) }
-func (cm *CloudEventManager) SetCallback(cb callback) { cm.callback = cb }
+func (manager *CloudEventManager) SetRetry(count int) { manager.retry = count }
+func (manager *CloudEventManager) SetTimeout(time time.Duration) { manager.timeout = int(time) }
+func (manager *CloudEventManager) SetCallback(cb callback) { manager.callback = cb }
 
-func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
-  count := cm.retry
-  timeout := cm.timeout
+func (manager *CloudEventManager) Send(ctx context.Context, client cloudevents.Client) {
+  count := manager.retry
+  timeout := manager.timeout
 
   for i := 0; i < count; i++ {
-    result := client.Send(ctx, cm.Event)
+    result := client.Send(ctx, manager.Event)
 
     if cloudevents.IsACK(result) {
       log.Printf("Result: 200")
@@ -70,22 +70,22 @@ func (cm *CloudEventManager) Send(ctx context.Context, client cloudevents.Client
   }
 }
 
-func (cm *CloudEventManager) Listen(ctx context.Context, cc *CloudEventClient, callback callback) error {
-	cm.SetCallback(callback)
+func (manager *CloudEventManager) Listen(ctx context.Context, config *CloudEventConfig, callback callback) error {
+	manager.SetCallback(callback)
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", cc.Address, cc.Port),
-		Handler: cm.Handler(),
+		Addr:    fmt.Sprintf("%s:%d", config.Address, config.Port),
+		Handler: manager.Handler(),
 	}
 
-  log.Printf("Starting server on %s", cc.Url())
+  log.Printf("Starting server on %s", config.Url())
 
 	var err error
-	if cc.Insecure {
+	if config.Insecure {
 		err = server.ListenAndServe()
 	} else {
 		// Load TLS configuration
-		cert, loadErr := tls.LoadX509KeyPair(cc.Certificate, cc.CertificateKey)
+		cert, loadErr := tls.LoadX509KeyPair(config.Certificate, config.CertificateKey)
 		if loadErr != nil {
 			return Error(ErrTlsConfig, fmt.Sprintf("Failed to load TLS certificates: %v", loadErr))
 		}
@@ -100,14 +100,14 @@ func (cm *CloudEventManager) Listen(ctx context.Context, cc *CloudEventClient, c
 	return nil
 }
 
-func (cm *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
+func (manager *CloudEventManager) Receive(ctx context.Context, client cloudevents.Client, callback callback) error {
 	if err := client.StartReceiver(ctx, callback); err != nil {
 		return Error(ErrReceiveFailed, err.Error())
 	}
 	return nil
 }
 
-func (cm *CloudEventManager) Display(event cloudevents.Event) {
+func (manager *CloudEventManager) Display(event cloudevents.Event) {
   log.Printf("Context Attributes,")
   log.Printf("  specversion: %s", event.SpecVersion())
   log.Printf("  type: %s", event.Type())
@@ -119,7 +119,7 @@ func (cm *CloudEventManager) Display(event cloudevents.Event) {
   log.Printf("  %s", string(event.Data()))
 }
 
-func (cm *CloudEventManager) Handler() http.Handler {
+func (manager *CloudEventManager) Handler() http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
     log.Println("Received HTTP request for CloudEvent")
 
@@ -130,35 +130,35 @@ func (cm *CloudEventManager) Handler() http.Handler {
     }
 
     // Use the callback if set, otherwise use Display as default
-    if cm.callback != nil {
-      cm.callback(*event)
+    if manager.callback != nil {
+      manager.callback(*event)
     } else {
-      cm.Display(*event)
+      manager.Display(*event)
     }
 
     w.WriteHeader(http.StatusOK)
   })
 }
 
-func (cm *CloudEventManager) Json() ([]byte, error) {
-  result, err := json.Marshal(cm.Event)
+func (manager *CloudEventManager) Json() ([]byte, error) {
+  result, err := json.Marshal(manager.Event)
   if err != nil {
     return nil, Error(ErrInvalidFormat, err.Error())
   }
   return result, nil
 }
 
-func (cm *CloudEventManager) FromJson(bytes []byte) {
-  err := json.Unmarshal(bytes, &cm.Message)
+func (manager *CloudEventManager) FromJson(bytes []byte) {
+  err := json.Unmarshal(bytes, &manager.Message)
   if err != nil {
     log.Fatalln(Error(ErrInvalidFormat, err.Error()))
     return
   }
-  cm.Event.SetData(cloudevents.ApplicationJSON, cm.Message)
+  manager.Event.SetData(cloudevents.ApplicationJSON, manager.Message)
 }
 
 func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManager {
-  cm := &CloudEventManager{Message: msg }
+  manager := &CloudEventManager{Message: msg }
 
   event := cloudevents.NewEvent()
   event.SetID(uuid.New().String())
@@ -172,9 +172,9 @@ func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManag
   event.SetType(cetype)
   event.SetData(cloudevents.ApplicationJSON, msg)
 
-  cm.uri = source
-  cm.cetype = cetype
-  cm.Event = event
+  manager.uri = source
+  manager.cetype = cetype
+  manager.Event = event
 
-  return cm
+  return manager
 }

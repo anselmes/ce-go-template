@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	ev "github.com/anselmes/ce-go-template/cloudevent"
+	event "github.com/anselmes/ce-go-template/cloudevent"
 	"github.com/spf13/cobra"
 )
 
@@ -23,17 +23,17 @@ var EventWebhookCmd = &cobra.Command {
     log.Println("Starting webhook server to handle CloudEvents...")
 
     if err := initializeClient(); err != nil {
-      log.Fatalln(ev.Error(ev.ErrReceiveFailed, err.Error()))
+      log.Fatalln(event.Error(event.ErrReceiveFailed, err.Error()))
     }
 
     // Set up HTTP handler for CloudEvents
-    http.Handle("/", cm.Handler())
+    http.Handle("/", manager.Handler())
 
     // Start HTTP server
-    log.Println("Listening on:", cc.Url())
-    err := http.ListenAndServe(fmt.Sprintf("%s:%d", cc.Address, cc.Port), nil)
+    log.Println("Listening on:", config.Url())
+    err := http.ListenAndServe(fmt.Sprintf("%s:%d", config.Address, config.Port), nil)
     if err != nil {
-      log.Fatalln(ev.Error(ev.ErrUnknown, err.Error()))
+      log.Fatalln(event.Error(event.ErrUnknown, err.Error()))
     }
   },
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	ev "github.com/anselmes/ce-go-template/cloudevent"
+	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
@@ -29,11 +29,11 @@ var SendEventCmd = &cobra.Command{
   `,
   Run: func(cmd *cobra.Command, args []string) {
     if err := initializeClient(); err != nil {
-      log.Fatalln(ev.Error(ev.ErrReceiveFailed, err.Error()))
+      log.Fatalln(event.Error(event.ErrReceiveFailed, err.Error()))
     }
 
     if print {
-      json, err := cm.Json()
+      json, err := manager.Json()
       if err != nil {
         log.Fatalf("failed to marshal CloudEvent, %v", err)
       }
@@ -41,25 +41,25 @@ var SendEventCmd = &cobra.Command{
       return
     }
 
-    if data != "" { cm.FromJson([]byte(data)) }
+    if data != "" { manager.FromJson([]byte(data)) }
 
     if retry {
       log.Printf("Retry enabled: %d attempts with %d ms timeout", attempt, timeout)
-      cm.SetRetry(attempt)
-      cm.SetTimeout(time.Duration(timeout))
+      manager.SetRetry(attempt)
+      manager.SetTimeout(time.Duration(timeout))
     } else {
       // Default to single attempt when retry is disabled
-      cm.SetRetry(1)
-      cm.SetTimeout(time.Duration(1000))
+      manager.SetRetry(1)
+      manager.SetTimeout(time.Duration(1000))
     }
 
     log.Printf("Sending CloudEvent...")
 
     if verbose {
-      log.Println(cm.Event)
+      log.Println(manager.Event)
     }
 
-    cm.Send(ctx, client)
+    manager.Send(ctx, client)
   },
 }
 

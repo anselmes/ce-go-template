@@ -9,7 +9,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/spf13/cobra"
 
-	ev "github.com/anselmes/ce-go-template/cloudevent"
+	event "github.com/anselmes/ce-go-template/cloudevent"
 )
 
 var (
@@ -23,12 +23,11 @@ var (
   verify bool
 
   client cloudevents.Client
-  cc *ev.CloudEventClient
-  cm *ev.CloudEventManager
+  config *event.CloudEventConfig
+  manager *event.CloudEventManager
   ctx context.Context
 
   data string
-  // sink string
 )
 
 // MARK: - Command
@@ -40,18 +39,6 @@ var EventCmd = &cobra.Command{
   Long:  `
   Send and Receive a CloudEvent to and from a specified target.
   `,
-  // Run: func(cmd *cobra.Command, args []string) {
-  //   log.Printf("Hello from CE (%s)!", endpoint)
-
-  //   host, node, opts := configSink()
-  //   p, err := ceamqp.NewProtocol(host, node, nil, nil, opts...)
-  //   if err != nil {
-  //     log.Fatalln(ev.Error(ev.ErrUnknown, err.Error()))
-  //   }
-
-  //   // Close the connection when finished
-  //   defer p.Close(context.Background())
-  // },
 }
 
 func init() {
@@ -74,8 +61,8 @@ func init() {
 }
 
 func initializeClient() error {
-  cm = ev.NewCloudEventManager(ev.Message{}, nil)
-  cc = &ev.CloudEventClient{
+  manager = event.NewCloudEventManager(event.Message{}, nil)
+  config = &event.CloudEventConfig{
     Address: address,
     Port: port,
     Certificate: cert,
@@ -84,26 +71,13 @@ func initializeClient() error {
     SkipVerify: !verify,
   }
 
-  endpoint = cc.Url().String()
+  endpoint = config.Url().String()
   ctx = cloudevents.ContextWithTarget(context.Background(), endpoint)
 
   var err error
-  if client, err = cc.Client(); err != nil {
-    return ev.Error(ev.ErrUnknown, err.Error())
+  if client, err = config.Client(); err != nil {
+    return event.Error(event.ErrUnknown, err.Error())
   }
 
   return nil
 }
-
-// func configSink() (server, node string, opts []ceamqp.Option) {
-// 	if sink == "" { sink = "/test" }
-
-// 	u, err := url.Parse(sink)
-// 	if err != nil { log.Fatalln(ev.Error(ev.ErrUnknown, err.Error())) }
-// 	if u.User != nil {
-// 		user := u.User.Username()
-// 		pass, _ := u.User.Password()
-// 		opts = append(opts, ceamqp.WithConnOpt(&amqp.ConnOptions{SASLType: amqp.SASLTypePlain(user, pass)}))
-// 	}
-// 	return sink, strings.TrimPrefix(u.Path, "/"), opts
-// }
