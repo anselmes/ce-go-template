@@ -78,7 +78,8 @@ func (manager *CloudEventManager) Listen(ctx context.Context, config *CloudEvent
 		Handler: manager.Handler(),
 	}
 
-  log.Printf("Starting server on %s", config.Url())
+
+  log.Printf("Listening for CloudEvent on %s...", config.Url())
 
 	var err error
 	if config.Insecure {
@@ -165,8 +166,10 @@ func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManag
   source := "ce/uri"
   cetype := "ce.type"
 
-  if opts.Source != "" { source = opts.Source }
-  if opts.Type != "" { cetype = opts.Type }
+  if opts != nil {
+    if opts.Source != "" { source = opts.Source }
+    if opts.Type != "" { cetype = opts.Type }
+  }
 
   event.SetSource(source)
   event.SetType(cetype)

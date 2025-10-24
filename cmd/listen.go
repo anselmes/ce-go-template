@@ -22,8 +22,6 @@ var ListenEventCmd = &cobra.Command{
     if err := initializeClient(); err != nil {
       log.Fatalln(event.Error(event.ErrReceiveFailed, err.Error()))
     }
-
-    log.Printf("Listening for CloudEvent on %s...", endpoint)
     log.Fatal(manager.Listen(ctx, config, manager.Display))
   },
 }
