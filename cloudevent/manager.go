@@ -157,7 +157,7 @@ func (cm *CloudEventManager) FromJson(bytes []byte) {
   cm.Event.SetData(cloudevents.ApplicationJSON, cm.Message)
 }
 
-func NewCloudEventManager(msg Message, opts ...CloudEventOptions) *CloudEventManager {
+func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManager {
   cm := &CloudEventManager{Message: msg }
 
   event := cloudevents.NewEvent()
@@ -165,14 +165,8 @@ func NewCloudEventManager(msg Message, opts ...CloudEventOptions) *CloudEventMan
   source := "ce/uri"
   cetype := "ce.type"
 
-  if len(opts) > 0 {
-    if opts[0].Source != "" {
-      source = opts[0].Source
-    }
-    if opts[0].Type != "" {
-      cetype = opts[0].Type
-    }
-  }
+  if opts.Source != "" { source = opts.Source }
+  if opts.Type != "" { cetype = opts.Type }
 
   event.SetSource(source)
   event.SetType(cetype)

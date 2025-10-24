@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
@@ -31,7 +32,7 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
     log.Printf("Insecure mode enabled, skipping TLS verification")
 
     // Create protocol and client for insecure mode
-    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()))
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url().String()))
     if err != nil {
       return nil, Error(ErrUnknown, err.Error())
     }
@@ -61,7 +62,7 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
     }
 
     // Create protocol and client
-    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url()), cloudevents.WithRoundTripper(cc.Transport()))
+    protocol, err := cloudevents.NewHTTP(cloudevents.WithTarget(cc.Url().String()), cloudevents.WithRoundTripper(cc.Transport()))
     if err != nil {
       return nil, Error(ErrUnknown, err.Error())
     }
@@ -74,11 +75,15 @@ func (cc CloudEventClient) Client() (cloudevents.Client, error) {
   return client, nil
 }
 
-// TODO: return url.URL
-func (cc CloudEventClient) Url() string {
+func (cc CloudEventClient) Url() *url.URL {
   scheme := "https"
-  if cc.Insecure { scheme = "http" }
-  return fmt.Sprintf("%s://%s:%d", scheme, cc.Address, cc.Port)
+  if cc.Insecure {
+    scheme = "http"
+  }
+  return &url.URL{
+    Scheme: scheme,
+    Host:   fmt.Sprintf("%s:%d", cc.Address, cc.Port),
+  }
 }
 
 func (cc CloudEventClient) Transport() *http.Transport {

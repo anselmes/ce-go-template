@@ -31,7 +31,7 @@ var EventWebhookCmd = &cobra.Command {
 
     // Start HTTP server
     log.Println("Listening on:", cc.Url())
-    err := http.ListenAndServe(fmt.Sprintf("%s:%d", address, port), nil)
+    err := http.ListenAndServe(fmt.Sprintf("%s:%d", cc.Address, cc.Port), nil)
     if err != nil {
       log.Fatalln(ev.Error(ev.ErrUnknown, err.Error()))
     }

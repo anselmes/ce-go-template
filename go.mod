@@ -3,8 +3,6 @@ module github.com/anselmes/ce-go-template
 go 1.25.3
 
 require (
-	github.com/Azure/go-amqp v1.5.0
-	github.com/cloudevents/sdk-go/protocol/amqp/v2 v2.16.2
 	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.10.1
