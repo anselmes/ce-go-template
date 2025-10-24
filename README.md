@@ -33,7 +33,7 @@ make cert
 cecli event webhook
 
 # using cli
-cecli event send -d '{"message": "value"}'
+cecli event send --insecure --data '{"message": "value"}'
 
 # using curl
 curl -X POST http://localhost:8080 \
@@ -55,7 +55,7 @@ cecli event listen
 ### Send Event
 
 ```shell
-cecli event send -d '{"message": "Hello from CloudEvent!!!"}'
+cecli event send -d '{"message": "value"}'
 ```
 
 ## Cleanup
