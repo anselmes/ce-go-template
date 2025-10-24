@@ -24,18 +24,18 @@ type CloudEventError struct {
   Message string `json:"message"`
 }
 
-func (e *CloudEventError) Error() error {
-  return fmt.Errorf("CloudEventError - %d: %s", e.Code, e.Message)
+func (err *CloudEventError) Error() error {
+  return fmt.Errorf("CloudEventError - %d: %s", err.Code, err.Message)
 }
 
-func Error(code CloudEventErrorCodes, msg ...string) error {
+func Error(code CloudEventErrorCodes, message ...string) error {
   err := CloudEventError{}
   err.Code = code
 
-  if len(msg) == 0 {
+  if len(message) == 0 {
     err.Message = "An unknown error occurred"
   } else {
-    err.Message = msg[0]
+    err.Message = message[0]
   }
 
   return err.Error()

@@ -3,8 +3,10 @@
 
 package cloudevent
 
+import "github.com/anselmes/ce-go-template/api"
+
 type CloudEventOptions struct {
   Source string
   Type   string
-  Data []byte
+  Data api.Data
 }

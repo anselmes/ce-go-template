@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/anselmes/ce-go-template/api"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 )
@@ -19,7 +20,7 @@ import (
 type callback func(event cloudevents.Event)
 
 type CloudEventManager struct {
-  Message Message
+  Data *api.Data
   Event cloudevents.Event
   retry int
   timeout int
@@ -150,16 +151,16 @@ func (manager *CloudEventManager) Json() ([]byte, error) {
 }
 
 func (manager *CloudEventManager) FromJson(bytes []byte) {
-  err := json.Unmarshal(bytes, &manager.Message)
+  err := json.Unmarshal(bytes, manager.Data)
   if err != nil {
     log.Fatalln(Error(ErrInvalidFormat, err.Error()))
     return
   }
-  manager.Event.SetData(cloudevents.ApplicationJSON, manager.Message)
+  manager.Event.SetData(cloudevents.ApplicationJSON, manager.Data)
 }
 
-func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManager {
-  manager := &CloudEventManager{Message: msg }
+func NewCloudEventManager(data *api.Data, opts *CloudEventOptions) *CloudEventManager {
+  manager := &CloudEventManager{Data: data}
 
   event := cloudevents.NewEvent()
   event.SetID(uuid.New().String())
@@ -173,7 +174,7 @@ func NewCloudEventManager(msg Message, opts *CloudEventOptions) *CloudEventManag
 
   event.SetSource(source)
   event.SetType(cetype)
-  event.SetData(cloudevents.ApplicationJSON, msg)
+  event.SetData(cloudevents.ApplicationJSON, data.Message)
 
   manager.uri = source
   manager.cetype = cetype
