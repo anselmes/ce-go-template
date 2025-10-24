@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/anselmes/ce-go-template/api"
+	api "github.com/anselmes/ce-go-template/api/v1"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/google/uuid"
 )

@@ -3,7 +3,7 @@
 
 package cloudevent
 
-import "github.com/anselmes/ce-go-template/api"
+import api "github.com/anselmes/ce-go-template/api/v1"
 
 type CloudEventOptions struct {
   Source string
