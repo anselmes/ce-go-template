@@ -12,22 +12,46 @@ all: build cert
 	@$(MAKE) proto || echo "⚠️ 'proto' target failed (possibly rate limited), continuing..."
 	@echo "🎯 All targets completed successfully!"
 
+# MARK: - Help
+
 help:
-	@echo "Available targets:"
-	@echo "  build         - Build the $(NAME) binary"
-	@echo "  install       - Install $(NAME) to $(PREFIX) (requires elevated privileges)"
-	@echo "  uninstall     - Uninstall $(NAME) from $(PREFIX) (requires elevated privileges)"
-	@echo "  proto         - Generate protobuf files"
-	@echo "  clean         - Clean build artifacts and generated files"
-	@echo "  config        - Generate OpenSSL config from cert.yaml"
-	@echo "  rootca        - Generate root CA certificate"
-	@echo "  ca            - Generate intermediate CA certificate (depends on rootca)"
-	@echo "  cert          - Generate TLS certificates (depends on ca)"
-	@echo "  webhook       - Start webhook server"
-	@echo "  listen        - Start event listener"
-	@echo "  send          - Send event (requires DATA variable)"
-	@echo "  send-test     - Send test event"
-	@echo "  help          - Show this help message"
+	@echo ""
+	@echo "                        \033[1;96m✨ $(NAME) ✨\033[0m"
+	@echo ""
+	@echo "   \033[1;93m🌟 General Commands\033[0m"
+	@echo "   \033[38;5;117m╭─\033[0m \033[1;97mall\033[0m               \033[37mBuild, generate protobuf and certificates\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97mhelp\033[0m              \033[37mShow this help message\033[0m"
+	@echo ""
+	@echo "   \033[1;93m⚡ Build & Clean\033[0m"
+	@echo "   \033[38;5;117m╭─\033[0m \033[1;97mproto\033[0m             \033[37mGenerate protobuf files\033[0m"
+	@echo "   \033[38;5;117m├─\033[0m \033[1;97mbuild\033[0m             \033[37mBuild the $(NAME) binary\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97mclean\033[0m             \033[37mClean build artifacts and generated files\033[0m"
+	@echo ""
+	@echo "   \033[1;93m📦 Installation\033[0m"
+	@echo "   \033[38;5;117m╭─\033[0m \033[1;97minstall\033[0m           \033[37mInstall $(NAME) to $(PREFIX)\033[0m \033[2;90m(requires sudo)\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97muninstall\033[0m         \033[37mUninstall $(NAME) from $(PREFIX)\033[0m \033[2;90m(requires sudo)\033[0m"
+	@echo ""
+	@echo "   \033[1;93m⚙️  Configuration\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97mconfig\033[0m            \033[37mGenerate OpenSSL config from cert.yaml\033[0m"
+	@echo ""
+	@echo "   \033[1;93m🔐 Certificates\033[0m"
+	@echo "   \033[38;5;117m╭─\033[0m \033[1;97mrootca\033[0m            \033[37mGenerate root CA certificate\033[0m"
+	@echo "   \033[38;5;117m├─\033[0m \033[1;97mca\033[0m                \033[37mGenerate intermediate CA certificate\033[0m \033[2;90m↳ rootca\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97mcert\033[0m              \033[37mGenerate TLS certificates\033[0m \033[2;90m↳ ca\033[0m"
+	@echo ""
+	@echo "   \033[1;93m🚀 Event Operations\033[0m"
+	@echo "   \033[38;5;117m╭─\033[0m \033[1;97mwebhook\033[0m           \033[37mStart webhook server on port 8080\033[0m"
+	@echo "   \033[38;5;117m├─\033[0m \033[1;97mlisten\033[0m            \033[37mStart event listener on localhost:8443\033[0m"
+	@echo "   \033[38;5;117m├─\033[0m \033[1;97msend\033[0m              \033[37mSend custom event\033[0m \033[2;90m(requires DATA variable)\033[0m"
+	@echo "   \033[38;5;117m╰─\033[0m \033[1;97msend-test\033[0m         \033[37mSend test event with sample data\033[0m"
+	@echo ""
+	@echo "   \033[2;96m💫 Usage:\033[0m \033[3;37mmake \033[1;97m<target>\033[0m"
+	@echo "   \033[2;96m📋 Examples:\033[0m"
+	@echo "     \033[37mmake send DATA='Hello World'\033[0m"
+	@echo "     \033[37mmake send DATA='{\"message\": \"Hello\"}'\033[0m"
+	@echo ""
+
+# MARK: - Install
 
 install:
 	@if [ ! -d .build ]; then \
@@ -45,6 +69,8 @@ uninstall:
 		echo "$(DESTDIR)$(PREFIX)/$(NAME) not found."; \
 	fi
 
+# MARK: - Build
+
 proto:
 	buf generate
 	@echo "🔄 Protocol buffer files generated successfully!"
@@ -53,7 +79,7 @@ build:
 	@if [ ! -d .build ]; then mkdir -p .build; fi
 	go build -ldflags "$(LDFLAGS)" -o .build/$(NAME) .
 	@echo "✅ Build complete!"
-	@echo "📝 To add cecli to PATH and enable completion, run:"
+	@echo "📝 To add $(NAME) to PATH and enable completion, run:"
 	@echo "   source .env"
 
 clean:
@@ -62,9 +88,13 @@ clean:
 	rm -f *.pem *.csr *.json
 	@echo "🧹 Clean complete!"
 
+# MARK: - Config
+
 config:
 	yq '.config' cert.yaml -o json >openssl.json
 	@echo "⚙️ OpenSSL configuration generated from cert.yaml!"
+
+# MARK: - Certificate
 
 rootca: config
 	yq '.ca' cert.yaml -o json >ca.json
@@ -92,6 +122,8 @@ cert: ca
 		| cfssljson -bare tls
 	cat tls.pem ca-bundle.pem >tls-bundle.pem
 	@echo "🔒 TLS certificates and bundle generated successfully!"
+
+# MARK: - Event
 
 webhook:
 	.build/$(NAME) event webhook \
@@ -123,6 +155,8 @@ send:
 		--port 8443 \
 		--data '$(DATA)'
 	@echo "📤 Event sent successfully with data: $(DATA)"
+
+# MARK: - Test
 
 send-test:
 	.build/$(NAME) event send \
