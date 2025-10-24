@@ -6,6 +6,7 @@ package cmd
 import (
 	"context"
 
+	"github.com/anselmes/ce-go-template/api"
 	event "github.com/anselmes/ce-go-template/event"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/spf13/cobra"
@@ -59,7 +60,7 @@ func init() {
 }
 
 func initializeClient() error {
-  manager = event.NewCloudEventManager(event.Message{}, nil)
+  manager = event.NewCloudEventManager(&api.Data{}, nil)
   config = &event.CloudEventConfig{
     Address: address,
     Port: port,
