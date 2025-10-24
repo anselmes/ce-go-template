@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "/;api";
+
+message Data { string message = 1; }
