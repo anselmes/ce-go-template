@@ -35,3 +35,12 @@ tls:
 	yq '.tls' cert.yaml -o json >tls.json
 	cfssl gencert -config openssl.json -profile tls -ca intermediate.pem -ca-key intermediate-key.pem tls.json | cfssljson -bare tls
 	cat tls.pem ca-bundle.pem >tls-bundle.pem
+
+webhook:
+	.build/$(NAME) event webhook --cert tls-bundle.pem --key tls-key.pem --port 8080
+
+listen:
+	.build/$(NAME) event listen --cert tls-bundle.pem --key tls-key.pem --address localhost --port 8443
+
+send:
+	.build/$(NAME) event send --cert tls-bundle.pem --key tls-key.pem --address localhost --port 8443 --data $@
