@@ -31,14 +31,6 @@ intermediateca:
 	cfssl gencert -config openssl.json -profile ca -ca ca.pem -ca-key ca-key.pem intermediate.json | cfssljson -bare intermediate
 	cat intermediate.pem ca.pem >ca-bundle.pem
 
-amqp: amqpcert
-	kubectl create secret tls amqp-tls-secret --cert=amqp.pem --key=amqp-key.pem --dry-run=client -o yaml | kubectl apply -f -
-	kubectl apply -f rabbit.yaml
-
-amqpcert:
-	yq '.amqp' cert.yaml -o json >amqp.json
-	cfssl gencert -config openssl.json -profile tls -ca intermediate.pem -ca-key intermediate-key.pem amqp.json | cfssljson -bare amqp
-
 tls:
 	yq '.tls' cert.yaml -o json >tls.json
 	cfssl gencert -config openssl.json -profile tls -ca intermediate.pem -ca-key intermediate-key.pem tls.json | cfssljson -bare tls
