@@ -5,30 +5,46 @@ VERSION := $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/-\(
 LDFLAGS := -X 'github.com/anselmes/ce-go-template/cmd.Name=$(NAME)' \
            -X 'github.com/anselmes/ce-go-template/cmd.Version=$(VERSION)'
 
-.PHONY: all build clean config ca intermediateca cert tls send send-test
+.PHONY: all proto build clean config rootca ca cert webhook listen send send-test help
 all: build
 
-build:
+help:
+	@echo "Available targets:"
+	@echo "  build         - Build the $(NAME) binary"
+	@echo "  proto         - Generate protobuf files"
+	@echo "  clean         - Clean build artifacts and generated files"
+	@echo "  config        - Generate OpenSSL config from cert.yaml"
+	@echo "  rootca        - Generate root CA certificate"
+	@echo "  ca            - Generate intermediate CA certificate (depends on rootca)"
+	@echo "  cert          - Generate TLS certificates (depends on ca)"
+	@echo "  webhook       - Start webhook server"
+	@echo "  listen        - Start event listener"
+	@echo "  send          - Send event (requires DATA variable)"
+	@echo "  send-test     - Send test event"
+	@echo "  help          - Show this help message"
+
+proto:
+	buf generate
+
+build: proto
 	mkdir -p .build
 	go build -ldflags "$(LDFLAGS)" -o .build/$(NAME) .
-	source <(cecli completion zsh)
+	source .env
 
 clean:
 	go clean .
 	rm -rf .build/
+	rm -f api/*.pb.go
 	rm -f *.pem *.csr *.json
 
 config:
 	yq '.config' cert.yaml -o json >openssl.json
 
-ca: rootca intermediateca
-cert: amqp tls
-
-rootca:
+rootca: config
 	yq '.ca' cert.yaml -o json >ca.json
 	cfssl genkey -config openssl.json -profile ca -initca ca.json | cfssljson -bare ca
 
-intermediateca:
+ca: rootca
 	yq '.intermediate' cert.yaml -o json >intermediate.json
 	cfssl gencert \
 		-config openssl.json \
@@ -38,7 +54,7 @@ intermediateca:
 		| cfssljson -bare intermediate
 	cat intermediate.pem ca.pem >ca-bundle.pem
 
-tls:
+cert: ca
 	yq '.tls' cert.yaml -o json >tls.json
 	cfssl gencert \
 		-config openssl.json \
@@ -82,4 +98,4 @@ send-test:
 		--key tls-key.pem \
 		--address localhost \
 		--port 8443 \
-		--data '{"message": "Hello from CloudEvent!", "timestamp": "'$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")'"}'
+		--data '{"message": "Hello from CloudEvent!!!", "timestamp": "'$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")'"}'
