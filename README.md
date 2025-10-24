@@ -50,13 +50,13 @@ curl -X POST http://localhost:8080 \
 ### Event Listener
 
 ```shell
-.build/cecli event listen
+cecli event listen
 ```
 
 ### Send Event
 
 ```shell
-.build/cecli event send -d '{"hello": "world"}'
+cecli event send -d '{"hello": "world"}'
 ```
 
 ## Cleanup
