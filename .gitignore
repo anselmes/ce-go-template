@@ -31,8 +31,11 @@ go.work.sum
 # .idea/
 # .vscode/
 
-# Project Files
+# Project Directory
 .build/
+
+# Project Files
 *.csr
+*.env
 *.json
 *.pem
