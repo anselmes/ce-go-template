@@ -66,6 +66,8 @@ make clean
 
 ---
 
+## License
+
 Copyright (c) 2025 Schubert Anselme <schubert@anselm.es>
 
 This program is free software: you can redistribute it and/or modify
