@@ -3,17 +3,17 @@
 
 ## Table of Contents
 
-- [event.proto](#event-proto)
+- [v1/event.proto](#v1_event-proto)
     - [Data](#api-Data)
   
 - [Scalar Value Types](#scalar-value-types)
 
 
 
-<a name="event-proto"></a>
+<a name="v1_event-proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## event.proto
+## v1/event.proto
 
 
 
