@@ -26,15 +26,16 @@ help:
 proto:
 	buf generate
 
-build: proto
-	mkdir -p .build
+build:
+	@if [ ! -d .build ]; then mkdir -p .build; fi
 	go build -ldflags "$(LDFLAGS)" -o .build/$(NAME) .
-	source .env
+	@echo "✅ Build complete!"
+	@echo "📝 To add cecli to PATH and enable completion, run:"
+	@echo "   source .env"
 
 clean:
 	go clean .
 	rm -rf .build/
-	rm -f api/*.pb.go
 	rm -f *.pem *.csr *.json
 
 config:

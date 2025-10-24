@@ -5,6 +5,7 @@
 ## Build
 
 ```shell
+make proto
 make build
 ```
 
