@@ -79,7 +79,6 @@ vscode "ms-vscode.test-adapter-converter"
 vscode "vadimcn.vscode-lldb"
 
 # VS Code extensions - Other utilities
-vscode "ashling.vscode-altera-fpgas"
 vscode "mechatroner.rainbow-csv"
 vscode "mindaro-dev.file-downloader"
 vscode "minherz.copyright-inserter"
