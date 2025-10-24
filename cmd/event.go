@@ -51,13 +51,12 @@ func init() {
   EventCmd.PersistentFlags().StringVar(&key, "key", "tls-key.pem", "Path to TLS key file")
 
   EventCmd.PersistentFlags().StringVarP(&data, "data", "d", "", "CloudEvent data payload to send")
-  // EventCmd.PersistentFlags().StringVarP(&sink, "sink", "K", "", "CloudEvent sink URL")
 
   // MARK: - Sub Command
 
-  EventCmd.AddCommand(SendEventCmd)
-  EventCmd.AddCommand(ListenEventCmd)
   EventCmd.AddCommand(EventWebhookCmd)
+  EventCmd.AddCommand(ListenEventCmd)
+  EventCmd.AddCommand(SendEventCmd)
 }
 
 func initializeClient() error {
