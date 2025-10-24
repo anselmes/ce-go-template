@@ -8,12 +8,10 @@
 make build
 ```
 
-## TLS
+## Certificate
 
 ```shell
-make config
-make ca
-make tls
+make cert
 ```
 
 ## Usage
@@ -34,7 +32,7 @@ make tls
 cecli event webhook
 
 # using cli
-cecli event send -d '{"key": "value"}'
+cecli event send -d '{"message": "value"}'
 
 # using curl
 curl -X POST http://localhost:8080 \
@@ -43,7 +41,7 @@ curl -X POST http://localhost:8080 \
   -H "Ce-Type: com.example.string" \
   -H "Ce-Source: example/source" \
   -H "Ce-Id: 1234" \
-  -d '{"key": "value"}' \
+  -d '{"message": "value"}' \
   --max-time 5
 ```
 
@@ -56,7 +54,7 @@ cecli event listen
 ### Send Event
 
 ```shell
-cecli event send -d '{"hello": "world"}'
+cecli event send -d '{"message": "Hello from CloudEvent!!!"}'
 ```
 
 ## Cleanup
